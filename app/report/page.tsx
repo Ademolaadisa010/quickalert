@@ -575,7 +575,7 @@ export default function ReportPage() {
                         </div>
                       ) : (
                         <div className="rec-btn-wrap">
-                          <button className={`rec-btn${cam.recStatus==="recording"?" recording":""}`} onClick={cam.startRecording}>
+                          <button className="rec-btn" onClick={cam.startRecording}>
                             <div className="rec-inner"/>
                           </button>
                         </div>
