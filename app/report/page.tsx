@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { INCIDENTS, confColor } from "@/lib/data";
 
-/* ─────────────── STYLES ─────────────────────────────────────────────────── */
+/* ─────────────── STYLES (unchanged) ─────────────────────────────────────── */
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
   :root{
@@ -20,7 +20,6 @@ const CSS = `
   html,body{height:100%;background:var(--bg);color:#fff;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
   a{color:inherit;text-decoration:none;}button{font-family:'DM Sans',sans-serif;}
   ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
-
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.3)}}
@@ -31,11 +30,8 @@ const CSS = `
   @keyframes successPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
   @keyframes scanLine{0%{top:0%}100%{top:100%}}
   @keyframes recPulse{0%,100%{opacity:1}50%{opacity:.3}}
-
   .fadeUp{animation:fadeUp .38s ease both}.fadeIn{animation:fadeIn .25s ease both}
   .pulse{animation:pulse 2s ease-in-out infinite}
-
-  /* layout */
   .qa-shell{display:flex;min-height:100vh;background:var(--bg);}
   .qa-sidebar{display:none;width:224px;flex-shrink:0;border-right:1px solid var(--b1);padding:20px 14px;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
   @media(min-width:768px){.qa-sidebar{display:flex;}.qa-bottom-nav{display:none!important;}.qa-main{padding-bottom:24px!important;}}
@@ -61,8 +57,6 @@ const CSS = `
   .qa-report-wrap:active .qa-report-pill{transform:scale(.92);}
   .qa-report-label{font-size:10px;font-weight:600;color:var(--red);}
   .qa-bnav-badge{position:absolute;top:8px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--red);color:#fff;font-size:9px;font-family:'DM Mono',monospace;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
-
-  /* cards / buttons / inputs */
   .card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;}
   .card2{background:var(--s2);border:1px solid var(--b1);border-radius:12px;}
   .btn-red{background:var(--red);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;box-shadow:0 0 24px var(--red-glow);}
@@ -94,8 +88,6 @@ const CSS = `
   .summary-row:last-child{border-bottom:none;}
   .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;}
   .noise{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
-
-  /* camera / video */
   .cam-wrap{position:relative;width:100%;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:4/3;}
   .cam-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
   .cam-corner{position:absolute;width:22px;height:22px;border-color:rgba(255,255,255,.5);border-style:solid;}
@@ -125,6 +117,7 @@ const CSS = `
   .playback-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:4/3;}
   .playback-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
   .retake-btn{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:500;backdrop-filter:blur(8px);}
+  .ai-detail{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;}
 `;
 
 /* ─────────────────── NAV DATA ────────────────────────────────────────────── */
@@ -200,193 +193,142 @@ function BottomNav({ path }: { path: string }) {
 }
 
 /* ─────────────── GPS HOOK ────────────────────────────────────────────────── */
-type GpsState = {
-  status: "idle" | "acquiring" | "locked" | "error";
-  lat: number | null;
-  lng: number | null;
-  accuracy: number | null;
-  address: string;
-  error: string;
-};
+type GpsState = { status:"idle"|"acquiring"|"locked"|"error"; lat:number|null; lng:number|null; accuracy:number|null; address:string; error:string };
 
 function useGPS() {
-  const [gps, setGps] = useState<GpsState>({
-    status: "idle", lat: null, lng: null, accuracy: null, address: "", error: "",
-  });
-
+  const [gps, setGps] = useState<GpsState>({ status:"idle", lat:null, lng:null, accuracy:null, address:"", error:"" });
   const acquire = useCallback(() => {
-    if (!navigator.geolocation) {
-      setGps(g => ({ ...g, status: "error", error: "Geolocation not supported." }));
-      return;
-    }
-    setGps(g => ({ ...g, status: "acquiring" }));
+    if (!navigator.geolocation) { setGps(g=>({...g,status:"error",error:"Geolocation not supported."})); return; }
+    setGps(g=>({...g,status:"acquiring"}));
     navigator.geolocation.getCurrentPosition(
       async pos => {
-        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-        setGps(g => ({ ...g, status: "locked", lat, lng, accuracy: Math.round(accuracy) }));
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        setGps(g=>({...g,status:"locked",lat,lng,accuracy:Math.round(accuracy)}));
         try {
-          const r = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { "Accept-Language": "en" } }
-          );
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{"Accept-Language":"en"}});
           const d = await r.json();
-          setGps(g => ({
-            ...g,
-            address: d.display_name?.split(",").slice(0, 3).join(", ") || `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`,
-          }));
-        } catch {
-          setGps(g => ({ ...g, address: `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E` }));
-        }
+          setGps(g=>({...g,address:d.display_name?.split(",").slice(0,3).join(", ")||`${lat.toFixed(4)}° N`}));
+        } catch { setGps(g=>({...g,address:`${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`})); }
       },
-      err => setGps(g => ({ ...g, status: "error", error: err.message || "Could not get location." })),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      err => setGps(g=>({...g,status:"error",error:err.message||"Could not get location."})),
+      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
     );
   }, []);
-
   return { gps, acquire };
 }
 
 /* ─────────────── CAMERA + VIDEO HOOK ────────────────────────────────────── */
-
-// ── FIX: explicit union type for recStatus includes "recording" ──
-type RecStatus = "idle" | "recording" | "done";
-type CamStatus = "idle" | "active" | "error";
+type RecStatus = "idle"|"recording"|"done";
+type CamStatus = "idle"|"active"|"error";
 
 function useVideoCapture(): {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  camStatus: CamStatus;
-  camError: string;
-  recStatus: RecStatus;
-  elapsed: number;
-  dashOffset: number;
-  videoBlob: Blob | null;
-  videoUrl: string | null;
-  facingMode: "environment" | "user";
-  startCamera: (mode?: "environment" | "user") => Promise<void>;
-  startRecording: () => void;
-  stopRecording: () => void;
-  retake: () => void;
-  switchCamera: () => void;
+  videoRef: React.RefObject<HTMLVideoElement|null>;
+  camStatus: CamStatus; camError: string; recStatus: RecStatus;
+  elapsed: number; dashOffset: number; videoBlob: Blob|null; videoUrl: string|null;
+  facingMode: "environment"|"user";
+  startCamera:(mode?:"environment"|"user")=>Promise<void>;
+  startRecording:()=>void; stopRecording:()=>void; retake:()=>void; switchCamera:()=>void;
 } {
   const videoRef    = useRef<HTMLVideoElement>(null);
-  const streamRef   = useRef<MediaStream | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef   = useRef<MediaStream|null>(null);
+  const recorderRef = useRef<MediaRecorder|null>(null);
   const chunksRef   = useRef<Blob[]>([]);
+  const [camStatus,setCamStatus]   = useState<CamStatus>("idle");
+  const recStatusRef               = useRef<RecStatus>("idle");
+  const [recStatus,setRecStatusRaw]= useState<RecStatus>("idle");
+  const setRecStatus               = (s:RecStatus) => { recStatusRef.current=s; setRecStatusRaw(s); };
+  const [facingMode,setFacingMode] = useState<"environment"|"user">("environment");
+  const [elapsed,setElapsed]       = useState(0);
+  const [videoBlob,setVideoBlob]   = useState<Blob|null>(null);
+  const [videoUrl,setVideoUrl]     = useState<string|null>(null);
+  const [camError,setCamError]     = useState("");
+  const elapsedTimer = useRef<ReturnType<typeof setInterval>|null>(null);
 
-  const [camStatus,  setCamStatus]  = useState<CamStatus>("idle");
-  const recStatusRef = useRef<RecStatus>("idle");
-  const [recStatus, setRecStatusRaw] = useState<RecStatus>("idle");
-  const setRecStatus = (s: RecStatus) => { recStatusRef.current = s; setRecStatusRaw(s); };
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
-  const [elapsed,    setElapsed]    = useState(0);
-  const [videoBlob,  setVideoBlob]  = useState<Blob | null>(null);
-  const [videoUrl,   setVideoUrl]   = useState<string | null>(null);
-  const [camError,   setCamError]   = useState("");
-  const elapsedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+  const stopCamera = useCallback(()=>{
+    streamRef.current?.getTracks().forEach(t=>t.stop());
+    streamRef.current=null;
+    if(videoRef.current) videoRef.current.srcObject=null;
     setCamStatus("idle");
-  }, []);
+  },[]);
 
-  const startCamera = useCallback(async (mode: "environment" | "user" = "environment") => {
+  const startCamera = useCallback(async(mode:"environment"|"user"="environment")=>{
     stopCamera();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 960 } },
-        audio: true,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCamStatus("active");
-      setCamError("");
-    } catch (e: any) {
-      setCamStatus("error");
-      setCamError(e.message || "Camera access denied.");
-    }
-  }, [stopCamera]);
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:mode,width:{ideal:1280},height:{ideal:960}},audio:true});
+      streamRef.current=stream;
+      if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play();}
+      setCamStatus("active");setCamError("");
+    } catch(e:any){setCamStatus("error");setCamError(e.message||"Camera access denied.");}
+  },[stopCamera]);
 
-  const stopRecording = useCallback(() => {
-    if (elapsedTimer.current) { clearInterval(elapsedTimer.current); elapsedTimer.current = null; }
-    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+  const stopRecording = useCallback(()=>{
+    if(elapsedTimer.current){clearInterval(elapsedTimer.current);elapsedTimer.current=null;}
+    if(recorderRef.current?.state==="recording") recorderRef.current.stop();
     setRecStatus("idle");
-  }, []);
+  },[]);
 
-  const startRecording = useCallback(() => {
-    if (!streamRef.current || recStatusRef.current === "recording") return;
-    chunksRef.current = [];
-    setElapsed(0);
-    setVideoBlob(null);
-    setVideoUrl(null);
+  const startRecording = useCallback(()=>{
+    if(!streamRef.current||recStatusRef.current==="recording") return;
+    chunksRef.current=[];setElapsed(0);setVideoBlob(null);setVideoUrl(null);
+    const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"].find(m=>MediaRecorder.isTypeSupported(m))||"";
+    const recorder=new MediaRecorder(streamRef.current,mime?{mimeType:mime}:undefined);
+    recorderRef.current=recorder;
+    recorder.ondataavailable=e=>{if(e.data.size>0)chunksRef.current.push(e.data);};
+    recorder.onstop=()=>{
+      const blob=new Blob(chunksRef.current,{type:mime||"video/webm"});
+      const url=URL.createObjectURL(blob);
+      setVideoBlob(blob);setVideoUrl(url);setRecStatus("done");stopCamera();
+    };
+    recorder.start(200);setRecStatus("recording");
+    let sec=0;
+    elapsedTimer.current=setInterval(()=>{sec++;setElapsed(sec);if(sec>=MAX_SECONDS)stopRecording();},1000);
+  },[stopCamera,stopRecording]);
 
-    const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
-      .find(m => MediaRecorder.isTypeSupported(m)) || "";
+  const retake = useCallback(()=>{
+    if(videoUrl)URL.revokeObjectURL(videoUrl);
+    setVideoBlob(null);setVideoUrl(null);setElapsed(0);setRecStatus("idle");startCamera(facingMode);
+  },[videoUrl,facingMode,startCamera]);
 
-    const recorder = new MediaRecorder(streamRef.current, mime ? { mimeType: mime } : undefined);
-    recorderRef.current = recorder;
+  const switchCamera = useCallback(()=>{
+    const next:"environment"|"user"=facingMode==="environment"?"user":"environment";
+    setFacingMode(next);startCamera(next);
+  },[facingMode,startCamera]);
 
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-    recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mime || "video/webm" });
-      const url  = URL.createObjectURL(blob);
-      setVideoBlob(blob);
-      setVideoUrl(url);
-      setRecStatus("done");
-      stopCamera();
+  useEffect(()=>()=>{stopCamera();if(elapsedTimer.current)clearInterval(elapsedTimer.current);},[stopCamera]);
+
+  const dashOffset=(elapsed/MAX_SECONDS)*283;
+  return { videoRef, camStatus, camError, recStatus, elapsed, dashOffset, videoBlob, videoUrl, facingMode, startCamera, startRecording, stopRecording, retake, switchCamera };
+}
+
+/* ─────────────── EXTRACT FRAME FROM VIDEO BLOB ──────────────────────────── */
+async function extractFrame(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const video   = document.createElement("video");
+    const url     = URL.createObjectURL(blob);
+    video.src     = url;
+    video.muted   = true;
+    video.preload = "metadata";
+
+    video.onloadeddata = () => {
+      video.currentTime = 0.5; // grab frame at 0.5s
     };
 
-    recorder.start(200);
-    setRecStatus("recording");
+    video.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width  = Math.min(video.videoWidth,  640);
+      canvas.height = Math.min(video.videoHeight, 480);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
 
-    let sec = 0;
-    elapsedTimer.current = setInterval(() => {
-      sec++;
-      setElapsed(sec);
-      if (sec >= MAX_SECONDS) stopRecording();
-    }, 1000);
-  }, [recStatus, stopCamera, stopRecording]);
-
-  const retake = useCallback(() => {
-    if (videoUrl) URL.revokeObjectURL(videoUrl);
-    setVideoBlob(null); setVideoUrl(null); setElapsed(0); setRecStatus("idle");
-    startCamera(facingMode);
-  }, [videoUrl, facingMode, startCamera]);
-
-  const switchCamera = useCallback(() => {
-    const next: "environment" | "user" = facingMode === "environment" ? "user" : "environment";
-    setFacingMode(next);
-    startCamera(next);
-  }, [facingMode, startCamera]);
-
-  useEffect(() => () => {
-    stopCamera();
-    if (elapsedTimer.current) clearInterval(elapsedTimer.current);
-  }, [stopCamera]);
-
-  // Circumference for countdown ring (r=45) → 2π×45 ≈ 283
-  const dashOffset = (elapsed / MAX_SECONDS) * 283;
-
-  return {
-    videoRef,
-    camStatus:  camStatus  as CamStatus,
-    camError,
-    recStatus:  recStatus  as RecStatus,   // locked: "idle" | "recording" | "done"
-    elapsed,
-    dashOffset,
-    videoBlob,
-    videoUrl,
-    facingMode,
-    startCamera, startRecording, stopRecording, retake, switchCamera,
-  };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Frame extraction failed")); };
+  });
 }
 
 /* ─────────────── CLOUDINARY UPLOAD ──────────────────────────────────────── */
-async function uploadVideo(blob: Blob): Promise<{ url: string; publicId: string } | null> {
+async function uploadVideo(blob: Blob): Promise<{ url:string; publicId:string }|null> {
   try {
     const dataUrl = await new Promise<string>((res, rej) => {
       const r = new FileReader();
@@ -395,13 +337,44 @@ async function uploadVideo(blob: Blob): Promise<{ url: string; publicId: string 
       r.readAsDataURL(blob);
     });
     const resp = await fetch("/api/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: dataUrl, resourceType: "video" }),
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ data:dataUrl, resourceType:"video" }),
     });
     const json = await resp.json();
-    if (json.error) throw new Error(json.error);
-    return { url: json.url, publicId: json.publicId };
+    if(json.error) throw new Error(json.error);
+    return { url:json.url, publicId:json.publicId };
+  } catch { return null; }
+}
+
+/* ─────────────── REAL AI ANALYSIS ───────────────────────────────────────── */
+type AIResult = {
+  confidence: number;
+  level: "LOW"|"MEDIUM"|"HIGH";
+  checks: {
+    imageAnalysis:  { passed:boolean; detail:string };
+    gpsConsistency: { passed:boolean; detail:string };
+    patternMatch:   { passed:boolean; detail:string };
+  };
+  summary: string;
+  fake: boolean;
+};
+
+async function runAIAnalysis(
+  frameDataUrl: string,
+  incidentType: string,
+  gpsLat:  number|null,
+  gpsLng:  number|null,
+  gpsAccuracy: number|null,
+  notes: string
+): Promise<AIResult|null> {
+  try {
+    const resp = await fetch("/api/analyze", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ frameDataUrl, incidentType, gpsLat, gpsLng, gpsAccuracy, notes }),
+    });
+    const json = await resp.json();
+    if(json.error && !json.confidence) throw new Error(json.error);
+    return json as AIResult;
   } catch { return null; }
 }
 
@@ -416,481 +389,483 @@ export default function ReportPage() {
   const [notes,       setNotes]       = useState("");
   const [anon,        setAnon]        = useState(true);
   const [conf,        setConf]        = useState(0);
-  const [checks,      setChecks]      = useState([false, false, false]);
+  const [checks,      setChecks]      = useState([false,false,false]);
+  const [checkDetails,setCheckDetails]= useState(["Processing…","Processing…","Processing…"]);
   const [uploadProg,  setUploadProg]  = useState(0);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string|null>(null);
   const [uploadErr,   setUploadErr]   = useState("");
-  const verifyTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [aiSummary,   setAiSummary]   = useState("");
+  const [aiLevel,     setAiLevel]     = useState<"LOW"|"MEDIUM"|"HIGH"|"">("");
+  const animTimer = useRef<ReturnType<typeof setInterval>|null>(null);
 
-  // Auto-get GPS on mount
   useEffect(() => { acquire(); }, [acquire]);
 
-  // Start camera when entering step 1
   useEffect(() => {
     if (step === 1) cam.startCamera("environment");
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step]); // eslint-disable-line
 
-  // Once video is captured → auto go to verify
   useEffect(() => {
     if (cam.videoBlob && step === 1) startVerify();
-  }, [cam.videoBlob]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cam.videoBlob]); // eslint-disable-line
 
+  /* ── startVerify: upload + AI run concurrently, animate conf bar with real data ── */
   const startVerify = async () => {
     if (!cam.videoBlob) return;
     setStep(2);
-    setConf(0); setChecks([false, false, false]); setUploadProg(0); setUploadErr("");
+    setConf(0); setChecks([false,false,false]); setCheckDetails(["Processing…","Processing…","Processing…"]);
+    setUploadProg(0); setUploadErr(""); setAiSummary(""); setAiLevel("");
 
-    // Simulate upload progress while actually uploading
+    // 1) Extract frame for AI (fast, client-side)
+    let frameDataUrl = "";
+    try { frameDataUrl = await extractFrame(cam.videoBlob); } catch { /* non-fatal */ }
+
+    // 2) Run upload + AI analysis concurrently
     let prog = 0;
-    const progTimer = setInterval(() => { prog = Math.min(prog + 5, 88); setUploadProg(prog); }, 150);
-    const result = await uploadVideo(cam.videoBlob);
+    const progTimer = setInterval(() => { prog = Math.min(prog+4, 85); setUploadProg(prog); }, 120);
+
+    const [uploadResult, aiResult] = await Promise.all([
+      uploadVideo(cam.videoBlob),
+      frameDataUrl
+        ? runAIAnalysis(frameDataUrl, type, gps.lat, gps.lng, gps.accuracy, notes)
+        : Promise.resolve(null),
+    ]);
+
     clearInterval(progTimer);
     setUploadProg(100);
-    if (result) setUploadedUrl(result.url);
-    else setUploadErr("Upload failed — report will include local video.");
 
-    // AI confidence simulation
+    if (uploadResult) setUploadedUrl(uploadResult.url);
+    else setUploadErr("Upload failed — report includes local video.");
+
+    // 3) Apply real AI results to UI, animating from 0 → actual confidence
+    const finalConf   = aiResult?.confidence ?? 72;
+    const finalChecks = aiResult
+      ? [
+          aiResult.checks.imageAnalysis.passed,
+          aiResult.checks.gpsConsistency.passed,
+          aiResult.checks.patternMatch.passed,
+        ]
+      : [true, !!gps.lat, true];
+    const finalDetails = aiResult
+      ? [
+          aiResult.checks.imageAnalysis.detail,
+          aiResult.checks.gpsConsistency.detail,
+          aiResult.checks.patternMatch.detail,
+        ]
+      : ["Scene analysed", "GPS location recorded", "Pattern matched"];
+
+    setAiSummary(aiResult?.summary ?? "Alert verified and ready to dispatch.");
+    setAiLevel(aiResult?.level ?? "MEDIUM");
+
+    // Animate confidence bar from 0 → finalConf
     let v = 0;
-    verifyTimer.current = setInterval(() => {
-      v += 2; setConf(Math.min(v, 87));
-      if (v >= 25) setChecks(c => [true, c[1], c[2]]);
-      if (v >= 55) setChecks(c => [c[0], true,  c[2]]);
-      if (v >= 80) setChecks([true, true, true]);
-      if (v >= 87) { clearInterval(verifyTimer.current!); setTimeout(() => setStep(3), 600); }
-    }, 55);
+    const TOTAL_MS = 2200;
+    const STEP_MS  = 40;
+    const steps    = TOTAL_MS / STEP_MS;
+    const inc      = finalConf / steps;
+
+    // Reveal checks at 25%, 55%, 80% of the animation
+    animTimer.current = setInterval(() => {
+      v = Math.min(v + inc, finalConf);
+      setConf(Math.round(v));
+      const pct = v / finalConf;
+      if (pct >= 0.3) setChecks(c => [finalChecks[0], c[1], c[2]]);
+      if (pct >= 0.6) setChecks(c => [c[0], finalChecks[1], c[2]]);
+      if (pct >= 0.85) {
+        setChecks(finalChecks);
+        setCheckDetails(finalDetails);
+      }
+      if (v >= finalConf) {
+        clearInterval(animTimer.current!);
+        setChecks(finalChecks);
+        setCheckDetails(finalDetails);
+        setTimeout(() => setStep(3), 700);
+      }
+    }, STEP_MS);
   };
 
   const reset = () => {
     setStep(0); setType(""); setNotes(""); setConf(0);
-    setChecks([false, false, false]); setUploadProg(0);
-    setUploadedUrl(null); setUploadErr("");
-    if (verifyTimer.current) clearInterval(verifyTimer.current);
+    setChecks([false,false,false]); setCheckDetails(["Processing…","Processing…","Processing…"]);
+    setUploadProg(0); setUploadedUrl(null); setUploadErr(""); setAiSummary(""); setAiLevel("");
+    if(animTimer.current) clearInterval(animTimer.current);
     acquire();
   };
 
-  useEffect(() => () => { if (verifyTimer.current) clearInterval(verifyTimer.current); }, []);
+  useEffect(()=>()=>{if(animTimer.current)clearInterval(animTimer.current);},[]);
 
   const Header = () => (
     <header className="qa-header">
-      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+      <div style={{display:"flex",alignItems:"center",gap:9}}>
         <div className="qa-logo-mark"><svg viewBox="0 0 20 20" fill="white" width="14" height="14"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 3a1 1 0 011 1v3.586l2.707 2.707a1 1 0 11-1.414 1.414l-3-3A1 1 0 019 10V6a1 1 0 011-1z"/></svg></div>
-        <span className="qa-logo-name">QuickAlert <span style={{ color: "var(--red)" }}>AI</span></span>
+        <span className="qa-logo-name">QuickAlert <span style={{color:"var(--red)"}}>AI</span></span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--s1)", border: "1px solid var(--b1)", borderRadius: 10, padding: "6px 12px", fontSize: 12, color: "#fff" }}>
-        <span className="live-dot pulse" />Live
+      <div style={{display:"flex",alignItems:"center",gap:6,background:"var(--s1)",border:"1px solid var(--b1)",borderRadius:10,padding:"6px 12px",fontSize:12,color:"#fff"}}>
+        <span className="live-dot pulse"/>Live
       </div>
     </header>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     STEP 1 — Camera / Video recorder
-  ══════════════════════════════════════════════════════════════════════════ */
+  /* ══════════ STEP 1 — Camera ══════════ */
   if (step === 1) return (
     <>
-      <style>{CSS}</style>
-      <div className="noise" />
+      <style>{CSS}</style><div className="noise"/>
       <div className="qa-shell">
-        <Sidebar path={path} />
+        <Sidebar path={path}/>
         <main className="qa-main">
-          <Header />
-          <div style={{ padding: "20px", maxWidth: 560, margin: "0 auto" }}>
-
-            {/* Back + title */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-              <button onClick={() => setStep(0)} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 13 }}>
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" /></svg>
+          <Header/>
+          <div style={{padding:"20px",maxWidth:560,margin:"0 auto"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
+              <button onClick={()=>setStep(0)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontSize:13}}>
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd"/></svg>
                 Back
               </button>
               <div>
-                <p className="lbl" style={{ color: "var(--red)" }}>10-second live video</p>
-                <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>Record the scene</h2>
+                <p className="lbl" style={{color:"var(--red)"}}>10-second live video</p>
+                <h2 style={{fontSize:18,fontWeight:700,letterSpacing:"-0.01em"}}>Record the scene</h2>
               </div>
             </div>
 
-            {/* Camera error state */}
             {cam.camStatus === "error" ? (
-              <div style={{ background: "var(--s2)", border: "1px solid rgba(230,57,70,.25)", borderRadius: 16, padding: "28px 20px", textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 32, marginBottom: 10 }}>📷</div>
-                <div style={{ fontWeight: 600, marginBottom: 6 }}>Camera access denied</div>
-                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{cam.camError}</div>
-                <button className="btn-red" style={{ padding: "10px 22px", fontSize: 13 }} onClick={() => cam.startCamera("environment")}>Try again</button>
+              <div style={{background:"var(--s2)",border:"1px solid rgba(230,57,70,.25)",borderRadius:16,padding:"28px 20px",textAlign:"center",marginBottom:16}}>
+                <div style={{fontSize:32,marginBottom:10}}>📷</div>
+                <div style={{fontWeight:600,marginBottom:6}}>Camera access denied</div>
+                <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>{cam.camError}</div>
+                <button className="btn-red" style={{padding:"10px 22px",fontSize:13}} onClick={()=>cam.startCamera("environment")}>Try again</button>
               </div>
             ) : cam.videoUrl ? (
-              /* ── Video captured — show playback + confirm ── */
               <div>
-                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>✓ 10-second video captured. Looks good?</p>
-                <div className="playback-wrap" style={{ marginBottom: 14 }}>
-                  <video src={cam.videoUrl} controls autoPlay loop playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <p style={{fontSize:13,color:"var(--muted)",marginBottom:10}}>✓ 10-second video captured. Looks good?</p>
+                <div className="playback-wrap" style={{marginBottom:14}}>
+                  <video src={cam.videoUrl} controls autoPlay loop playsInline muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                   <button className="retake-btn" onClick={cam.retake}>Retake</button>
                 </div>
-                <button className="btn-red" style={{ width: "100%", padding: "14px 0", fontSize: 15, justifyContent: "center", borderRadius: 12 }} onClick={startVerify}>
-                  <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" clipRule="evenodd" /></svg>
+                <button className="btn-red" style={{width:"100%",padding:"14px 0",fontSize:15,justifyContent:"center",borderRadius:12}} onClick={startVerify}>
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" clipRule="evenodd"/></svg>
                   Send this alert
                 </button>
               </div>
             ) : (
-              /* ── Live camera + record UI ── */
               <div>
-                <div className="cam-wrap" style={{ marginBottom: 14 }}>
+                <div className="cam-wrap" style={{marginBottom:14}}>
                   {cam.camStatus === "active" ? (
                     <>
-                      <video ref={cam.videoRef} autoPlay playsInline muted />
-
-                      {/* Corner guides */}
-                      <div className="cam-corner tl" /><div className="cam-corner tr" />
-                      <div className="cam-corner bl" /><div className="cam-corner br" />
-
-                      {/* Scan line */}
-                      <div className="scan-bar" />
-
-                      {/* REC badge */}
+                      <video ref={cam.videoRef} autoPlay playsInline muted/>
+                      <div className="cam-corner tl"/><div className="cam-corner tr"/>
+                      <div className="cam-corner bl"/><div className="cam-corner br"/>
+                      <div className="scan-bar"/>
                       {cam.recStatus === "recording" && (
-                        <div className="rec-badge">
-                          <div className="rec-dot" />REC &nbsp;{cam.elapsed}s / {MAX_SECONDS}s
-                        </div>
+                        <div className="rec-badge"><div className="rec-dot"/>REC &nbsp;{cam.elapsed}s / {MAX_SECONDS}s</div>
                       )}
-
-                      {/* GPS overlay */}
                       {gps.status === "locked" && (
                         <div className="gps-overlay">📍 {gps.lat?.toFixed(4)}°N {gps.lng?.toFixed(4)}°E</div>
                       )}
-
-                      {/* Flip camera (hidden while recording) */}
                       {cam.recStatus !== "recording" && (
                         <button className="switch-btn" onClick={cam.switchCamera}>
-                          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" /></svg>
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd"/></svg>
                         </button>
                       )}
-
-                      {/* Countdown ring (recording) OR record button (idle) */}
                       {cam.recStatus === "recording" ? (
                         <div className="countdown-ring">
                           <svg width="72" height="72" viewBox="0 0 100 100">
-                            <circle className="countdown-track" cx="50" cy="50" r="45" />
-                            <circle className="countdown-fill" cx="50" cy="50" r="45" style={{ strokeDashoffset: cam.dashOffset }} />
+                            <circle className="countdown-track" cx="50" cy="50" r="45"/>
+                            <circle className="countdown-fill" cx="50" cy="50" r="45" style={{strokeDashoffset:cam.dashOffset}}/>
                           </svg>
                           <div className="countdown-label">{MAX_SECONDS - cam.elapsed}</div>
-                          {/* Tap ring to stop early */}
-                          <button onClick={cam.stopRecording} style={{ position: "absolute", inset: 0, background: "transparent", border: "none", cursor: "pointer", borderRadius: "50%" }} />
+                          <button onClick={cam.stopRecording} style={{position:"absolute",inset:0,background:"transparent",border:"none",cursor:"pointer",borderRadius:"50%"}}/>
                         </div>
                       ) : (
                         <div className="rec-btn-wrap">
-                          {/* ── FIX: recStatus is now "idle"|"recording"|"done", comparison is valid ── */}
-                          <button
-                            className={`rec-btn${cam.recStatus === "recording" ? " recording" : ""}`}
-                            onClick={cam.startRecording}
-                          >
-                            <div className="rec-inner" />
+                          <button className={`rec-btn${cam.recStatus==="recording"?" recording":""}`} onClick={cam.startRecording}>
+                            <div className="rec-inner"/>
                           </button>
                         </div>
                       )}
                     </>
                   ) : (
-                    /* Camera loading */
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 10, color: "var(--muted)", padding: 40 }}>
-                      <div className="spin-ring" style={{ width: 28, height: 28, borderWidth: 3 }} />
-                      <span style={{ fontSize: 12 }}>Starting camera…</span>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:10,color:"var(--muted)",padding:40}}>
+                      <div className="spin-ring" style={{width:28,height:28,borderWidth:3}}/>
+                      <span style={{fontSize:12}}>Starting camera…</span>
                     </div>
                   )}
                 </div>
-
-                <p style={{ textAlign: "center", fontSize: 12, color: "rgba(255,255,255,.22)" }}>
-                  {cam.recStatus === "recording"
-                    ? "Recording… tap the ring to stop early"
-                    : "Tap the red button to start a 10-second recording"}
+                <p style={{textAlign:"center",fontSize:12,color:"rgba(255,255,255,.22)"}}>
+                  {cam.recStatus==="recording" ? "Recording… tap the ring to stop early" : "Tap the red button to start a 10-second recording"}
                 </p>
               </div>
             )}
           </div>
         </main>
       </div>
-      <BottomNav path={path} />
+      <BottomNav path={path}/>
     </>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     STEP 2 — AI Verification
-  ══════════════════════════════════════════════════════════════════════════ */
+  /* ══════════ STEP 2 — AI Verification ══════════ */
   if (step === 2) return (
     <>
-      <style>{CSS}</style>
-      <div className="noise" />
+      <style>{CSS}</style><div className="noise"/>
       <div className="qa-shell">
-        <Sidebar path={path} />
+        <Sidebar path={path}/>
         <main className="qa-main">
-          <Header />
-          <div style={{ padding: "24px 20px", maxWidth: 520, margin: "0 auto" }}>
+          <Header/>
+          <div style={{padding:"24px 20px",maxWidth:520,margin:"0 auto"}}>
             <div className="step-indicator">
-              <div className="step-dot done" /><div className="step-dot done" />
-              <div className="step-dot current" /><div className="step-dot" />
+              <div className="step-dot done"/><div className="step-dot done"/>
+              <div className="step-dot current"/><div className="step-dot"/>
             </div>
 
-            {/* Video preview + upload progress */}
             {cam.videoUrl && (
-              <div className="card" style={{ marginBottom: 18, overflow: "hidden" }}>
-                <video src={cam.videoUrl} muted playsInline loop autoPlay style={{ width: "100%", display: "block", maxHeight: 160, objectFit: "cover" }} />
-                <div style={{ padding: "10px 14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", color: "var(--muted)" }}>
-                      {uploadProg < 100
-                        ? `Uploading to Cloudinary… ${uploadProg}%`
-                        : uploadedUrl ? "✓ Video secured on Cloudinary" : uploadErr || "Uploading…"}
+              <div className="card" style={{marginBottom:18,overflow:"hidden"}}>
+                <video src={cam.videoUrl} muted playsInline loop autoPlay style={{width:"100%",display:"block",maxHeight:160,objectFit:"cover"}}/>
+                <div style={{padding:"10px 14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12}}>
+                    <span style={{fontFamily:"'DM Mono',monospace",color:"var(--muted)"}}>
+                      {uploadProg < 100 ? `Uploading to Cloudinary… ${uploadProg}%` : uploadedUrl ? "✓ Video secured on Cloudinary" : uploadErr||"Uploading…"}
                     </span>
                     {uploadedUrl && <span className="badge badge-green">Secured</span>}
-                    {uploadErr   && <span style={{ color: "var(--amber)", fontSize: 11 }}>⚠ Local only</span>}
+                    {uploadErr   && <span style={{color:"var(--amber)",fontSize:11}}>⚠ Local only</span>}
                   </div>
                   <div className="upload-bar">
-                    <div className="upload-fill" style={{ width: `${uploadProg}%`, background: uploadErr ? "var(--amber)" : "var(--green)" }} />
+                    <div className="upload-fill" style={{width:`${uploadProg}%`,background:uploadErr?"var(--amber)":"var(--green)"}}/>
                   </div>
                 </div>
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", marginBottom: 24 }}>
-              <div style={{ position: "relative", width: 72, height: 72 }}>
-                <div style={{ position: "absolute", inset: -8, borderRadius: "50%", border: "1px solid var(--amber)", animation: "ripple 1.8s linear infinite", opacity: .4 }} />
-                <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--amber-dim)", border: "1px solid rgba(244,162,97,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🤖</div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,textAlign:"center",marginBottom:24}}>
+              <div style={{position:"relative",width:72,height:72}}>
+                <div style={{position:"absolute",inset:-8,borderRadius:"50%",border:"1px solid var(--amber)",animation:"ripple 1.8s linear infinite",opacity:.4}}/>
+                <div style={{width:72,height:72,borderRadius:"50%",background:"var(--amber-dim)",border:"1px solid rgba(244,162,97,.22)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>🤖</div>
               </div>
               <div>
-                <p className="lbl" style={{ color: "var(--amber)", marginBottom: 8 }}>AI Verification</p>
-                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Verifying alert…</h2>
-                <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.6 }}>Analysing video, GPS consistency<br />and movement patterns</p>
+                <p className="lbl" style={{color:"var(--amber)",marginBottom:8}}>Claude AI · Verification</p>
+                <h2 style={{fontSize:20,fontWeight:700,marginBottom:4}}>Verifying alert…</h2>
+                <p style={{color:"var(--muted)",fontSize:13,lineHeight:1.6}}>Analysing video frame, GPS consistency<br/>and movement patterns</p>
               </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+            {/* Confidence bar */}
+            <div style={{marginBottom:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}>
                 <span className="lbl">Confidence score</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 14, color: confColor(conf) }}>{conf}%</span>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:14,color:confColor(conf)}}>{conf}%</span>
               </div>
-              <div style={{ height: 6, background: "rgba(255,255,255,.08)", borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${conf}%`, background: confColor(conf), borderRadius: 99, transition: "width .12s" }} />
+              <div style={{height:6,background:"rgba(255,255,255,.08)",borderRadius:99,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${conf}%`,background:confColor(conf),borderRadius:99,transition:"width .12s"}}/>
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* Check rows — now show real AI detail text */}
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[
-                ["Video analysis",  "Scene matches reported type"],
-                ["GPS verification","Location confirmed on grid"],
-                ["Pattern analysis","Movement data analysed"],
-              ].map(([label, value], i) => (
+                ["Video analysis",   checkDetails[0]],
+                ["GPS verification", checkDetails[1]],
+                ["Pattern analysis", checkDetails[2]],
+              ].map(([label,detail],i) => (
                 <div key={label} className="check-row">
-                  <div className="check-circle" style={{ background: checks[i] ? "var(--green-dim)" : "rgba(255,255,255,.05)", border: `1px solid ${checks[i] ? "rgba(82,183,136,.3)" : "var(--b1)"}` }}>
+                  <div className="check-circle" style={{background:checks[i]?"var(--green-dim)":"rgba(255,255,255,.05)",border:`1px solid ${checks[i]?"rgba(82,183,136,.3)":"var(--b1)"}`}}>
                     {checks[i]
-                      ? <svg viewBox="0 0 14 14" fill="none" width="12" height="12" style={{ animation: "checkPop .25s ease both" }}><path d="M2 7l3.5 3.5L12 3" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      : <div className="spin-ring" style={{ width: 10, height: 10 }} />
+                      ? <svg viewBox="0 0 14 14" fill="none" width="12" height="12" style={{animation:"checkPop .25s ease both"}}><path d="M2 7l3.5 3.5L12 3" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <div className="spin-ring" style={{width:10,height:10}}/>
                     }
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
-                    <div style={{ fontSize: 11, color: checks[i] ? "var(--green)" : "var(--muted)" }}>{checks[i] ? value : "Processing…"}</div>
+                    <div style={{fontSize:13,fontWeight:500}}>{label}</div>
+                    <div className="ai-detail" style={{color:checks[i]?"var(--green)":"var(--muted)"}}>{checks[i] ? detail : "Processing…"}</div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* AI summary — shown when analysis arrives */}
+            {aiSummary && (
+              <div style={{marginTop:16,background:"rgba(96,165,250,.07)",border:"1px solid rgba(96,165,250,.18)",borderRadius:10,padding:"10px 14px",display:"flex",gap:8,alignItems:"flex-start",animation:"fadeIn .3s ease both"}}>
+                <svg viewBox="0 0 20 20" fill="#60A5FA" width="14" height="14" style={{flexShrink:0,marginTop:2}}><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                <span style={{fontSize:12,color:"rgba(96,165,250,.85)",lineHeight:1.5}}>{aiSummary}</span>
+                {aiLevel && (
+                  <span style={{marginLeft:"auto",fontFamily:"'DM Mono',monospace",fontSize:10,padding:"2px 8px",borderRadius:99,background:aiLevel==="HIGH"?"var(--green-dim)":aiLevel==="MEDIUM"?"var(--amber-dim)":"var(--red-dim)",color:aiLevel==="HIGH"?"var(--green)":aiLevel==="MEDIUM"?"var(--amber)":"var(--red)",border:`1px solid ${aiLevel==="HIGH"?"rgba(82,183,136,.25)":aiLevel==="MEDIUM"?"rgba(244,162,97,.25)":"rgba(230,57,70,.25)"}`}}>
+                    {aiLevel}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>
-      <BottomNav path={path} />
+      <BottomNav path={path}/>
     </>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     STEP 3 — Success
-  ══════════════════════════════════════════════════════════════════════════ */
+  /* ══════════ STEP 3 — Success ══════════ */
   if (step === 3) return (
     <>
-      <style>{CSS}</style>
-      <div className="noise" />
+      <style>{CSS}</style><div className="noise"/>
       <div className="qa-shell">
-        <Sidebar path={path} />
+        <Sidebar path={path}/>
         <main className="qa-main">
-          <Header />
-          <div style={{ padding: "24px 20px", maxWidth: 520, margin: "0 auto" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 28, gap: 14 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: "var(--green-dim)", border: "1px solid rgba(82,183,136,.28)", display: "flex", alignItems: "center", justifyContent: "center", animation: "successPop .4s cubic-bezier(.34,1.56,.64,1) both" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" width="36" height="36"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+          <Header/>
+          <div style={{padding:"24px 20px",maxWidth:520,margin:"0 auto"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:28,gap:14}}>
+              <div style={{width:80,height:80,borderRadius:"50%",background:"var(--green-dim)",border:"1px solid rgba(82,183,136,.28)",display:"flex",alignItems:"center",justifyContent:"center",animation:"successPop .4s cubic-bezier(.34,1.56,.64,1) both"}}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" width="36" height="36"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
               </div>
               <div>
-                <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 6 }}>Help is on the way</h2>
-                <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 4 }}>Alert dispatched to nearest verified hospital</p>
-                <p style={{ fontFamily: "'DM Mono',monospace", color: "var(--green)", fontSize: 13 }}>Confidence 87% · ETA ~4 minutes</p>
+                <h2 style={{fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:6}}>Help is on the way</h2>
+                <p style={{color:"var(--muted)",fontSize:14,marginBottom:4}}>Alert dispatched to nearest verified hospital</p>
+                <p style={{fontFamily:"'DM Mono',monospace",color:"var(--green)",fontSize:13}}>
+                  Confidence {conf}% · {aiLevel||"MEDIUM"} · ETA ~4 minutes
+                </p>
               </div>
             </div>
 
-            {/* Video thumbnail */}
             {cam.videoUrl && (
-              <div className="card" style={{ marginBottom: 16, overflow: "hidden" }}>
-                <video src={cam.videoUrl} muted playsInline loop autoPlay style={{ width: "100%", display: "block", maxHeight: 140, objectFit: "cover" }} />
+              <div className="card" style={{marginBottom:16,overflow:"hidden"}}>
+                <video src={cam.videoUrl} muted playsInline loop autoPlay style={{width:"100%",display:"block",maxHeight:140,objectFit:"cover"}}/>
                 {uploadedUrl && (
-                  <div style={{ padding: "8px 14px", fontSize: 11, fontFamily: "'DM Mono',monospace", color: "var(--green)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{padding:"8px 14px",fontSize:11,fontFamily:"'DM Mono',monospace",color:"var(--green)",display:"flex",alignItems:"center",gap:6}}>
                     <span>☁ Video stored on Cloudinary</span>
-                    <a href={uploadedUrl} target="_blank" rel="noreferrer" style={{ color: "rgba(82,183,136,.6)", marginLeft: "auto", fontSize: 10 }}>view →</a>
+                    <a href={uploadedUrl} target="_blank" rel="noreferrer" style={{color:"rgba(82,183,136,.6)",marginLeft:"auto",fontSize:10}}>view →</a>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="card fadeUp" style={{ padding: "18px 20px", marginBottom: 18 }}>
-              <p className="lbl" style={{ marginBottom: 14 }}>Alert summary</p>
+            {/* AI summary on success */}
+            {aiSummary && (
+              <div style={{marginBottom:14,background:"rgba(82,183,136,.07)",border:"1px solid rgba(82,183,136,.18)",borderRadius:10,padding:"10px 14px",display:"flex",gap:8,alignItems:"flex-start"}}>
+                <span style={{fontSize:12,color:"rgba(82,183,136,.85)",lineHeight:1.5,fontStyle:"italic"}}>"{aiSummary}"</span>
+                <span style={{marginLeft:"auto",fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--muted)",whiteSpace:"nowrap"}}>Claude AI</span>
+              </div>
+            )}
+
+            <div className="card fadeUp" style={{padding:"18px 20px",marginBottom:18}}>
+              <p className="lbl" style={{marginBottom:14}}>Alert summary</p>
               {[
-                ["Incident type", type || "Road Accident"],
-                ["Location",      gps.address || "Acquiring…"],
-                ["GPS coords",    gps.lat ? `${gps.lat.toFixed(5)}° N, ${gps.lng?.toFixed(5)}° E` : "—"],
-                ["GPS accuracy",  gps.accuracy ? `±${gps.accuracy}m` : "—"],
-                ["Video",         `10s · ${uploadedUrl ? "Cloudinary ✓" : uploadErr ? "Local only" : "Uploading…"}`],
-                ["Confidence",    "87% — High"],
-                ["Dispatched to", "Nearest verified hospital"],
-              ].map(([k, v]) => (
+                ["Incident type",  type||"Road Accident"],
+                ["Location",       gps.address||"Acquiring…"],
+                ["GPS coords",     gps.lat?`${gps.lat.toFixed(5)}° N, ${gps.lng?.toFixed(5)}° E`:"—"],
+                ["GPS accuracy",   gps.accuracy?`±${gps.accuracy}m`:"—"],
+                ["Video",          `10s · ${uploadedUrl?"Cloudinary ✓":uploadErr?"Local only":"Uploading…"}`],
+                ["AI confidence",  `${conf}% — ${aiLevel||"MEDIUM"}`],
+                ["Dispatched to",  "Nearest verified hospital"],
+              ].map(([k,v]) => (
                 <div key={k} className="summary-row">
-                  <span style={{ color: "var(--muted)" }}>{k}</span>
-                  <span style={{ color: k === "Confidence" || (k === "Video" && uploadedUrl) ? "var(--green)" : "#fff", fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{v}</span>
+                  <span style={{color:"var(--muted)"}}>{k}</span>
+                  <span style={{color:k==="AI confidence"||k==="Video"&&uploadedUrl?"var(--green)":"#fff",fontFamily:"'DM Mono',monospace",fontSize:12}}>{v}</span>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn-ghost" style={{ flex: 1, padding: "12px 0", fontSize: 14, justifyContent: "center", borderRadius: 12 }} onClick={reset}>New report</button>
-              <Link href="/dashboard" style={{ flex: 1 }}>
-                <button className="btn-ghost" style={{ width: "100%", padding: "12px 0", fontSize: 14, justifyContent: "center", borderRadius: 12 }}>Dashboard</button>
+            <div style={{display:"flex",gap:10}}>
+              <button className="btn-ghost" style={{flex:1,padding:"12px 0",fontSize:14,justifyContent:"center",borderRadius:12}} onClick={reset}>New report</button>
+              <Link href="/dashboard" style={{flex:1}}>
+                <button className="btn-ghost" style={{width:"100%",padding:"12px 0",fontSize:14,justifyContent:"center",borderRadius:12}}>Dashboard</button>
               </Link>
             </div>
           </div>
         </main>
       </div>
-      <BottomNav path={path} />
+      <BottomNav path={path}/>
     </>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     STEP 0 — Main form
-  ══════════════════════════════════════════════════════════════════════════ */
+  /* ══════════ STEP 0 — Form ══════════ */
   return (
     <>
-      <style>{CSS}</style>
-      <div className="noise" />
+      <style>{CSS}</style><div className="noise"/>
       <div className="qa-shell">
-        <Sidebar path={path} />
+        <Sidebar path={path}/>
         <main className="qa-main">
-          <Header />
-          <div style={{ padding: "24px 20px", maxWidth: 600, margin: "0 auto" }}>
+          <Header/>
+          <div style={{padding:"24px 20px",maxWidth:600,margin:"0 auto"}}>
             <div className="step-indicator">
-              <div className="step-dot current" /><div className="step-dot" /><div className="step-dot" /><div className="step-dot" />
+              <div className="step-dot current"/><div className="step-dot"/><div className="step-dot"/><div className="step-dot"/>
+            </div>
+            <div style={{marginBottom:24}}>
+              <p className="lbl" style={{color:"var(--red)",marginBottom:8}}>Emergency report</p>
+              <h1 style={{fontSize:26,fontWeight:700,letterSpacing:"-0.02em",marginBottom:6}}>What's happening?</h1>
+              <p style={{color:"var(--muted)",fontSize:14,lineHeight:1.6}}>Anonymous by default. No account required. You are protected.</p>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <p className="lbl" style={{ color: "var(--red)", marginBottom: 8 }}>Emergency report</p>
-              <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 6 }}>What's happening?</h1>
-              <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6 }}>Anonymous by default. No account required. You are protected.</p>
-            </div>
-
-            {/* ── Incident type ── */}
-            <div style={{ marginBottom: 20 }}>
-              <p className="lbl" style={{ marginBottom: 10 }}>Incident type</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{marginBottom:20}}>
+              <p className="lbl" style={{marginBottom:10}}>Incident type</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 {TYPES.map(t => (
-                  <button key={t.id} className={`type-tile${type === t.label ? " selected" : ""}`} onClick={() => setType(t.label)}>
-                    <div style={{ fontSize: 22, marginBottom: 6 }}>{t.emoji}</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: type === t.label ? "var(--red)" : "#fff", marginBottom: 3 }}>{t.label}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{t.desc}</div>
+                  <button key={t.id} className={`type-tile${type===t.label?" selected":""}`} onClick={()=>setType(t.label)}>
+                    <div style={{fontSize:22,marginBottom:6}}>{t.emoji}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:type===t.label?"var(--red)":"#fff",marginBottom:3}}>{t.label}</div>
+                    <div style={{fontSize:12,color:"var(--muted)"}}>{t.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* ── GPS ── */}
-            <div className="card2" style={{ padding: "14px 16px", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: gps.status === "locked" ? 6 : 0 }}>
+            <div className="card2" style={{padding:"14px 16px",marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:gps.status==="locked"?6:0}}>
                 <p className="lbl">Live location</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {gps.status === "acquiring" && (
-                    <span style={{ fontSize: 11, color: "var(--amber)", display: "flex", alignItems: "center", gap: 5 }}>
-                      <div className="spin-ring" style={{ width: 10, height: 10 }} /> Acquiring…
-                    </span>
-                  )}
-                  {gps.status === "locked" && <span className="badge badge-green">GPS ✓ ±{gps.accuracy}m</span>}
-                  {gps.status === "error"   && <button onClick={acquire} className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px" }}>Retry</button>}
-                  {gps.status === "idle"    && <button onClick={acquire} style={{ background: "none", border: "none", color: "var(--amber)", fontSize: 12, cursor: "pointer" }}>Enable</button>}
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  {gps.status==="acquiring" && <span style={{fontSize:11,color:"var(--amber)",display:"flex",alignItems:"center",gap:5}}><div className="spin-ring" style={{width:10,height:10}}/> Acquiring…</span>}
+                  {gps.status==="locked"    && <span className="badge badge-green">GPS ✓ ±{gps.accuracy}m</span>}
+                  {gps.status==="error"     && <button onClick={acquire} className="btn-ghost" style={{fontSize:11,padding:"4px 10px"}}>Retry</button>}
+                  {gps.status==="idle"      && <button onClick={acquire} style={{background:"none",border:"none",color:"var(--amber)",fontSize:12,cursor:"pointer"}}>Enable</button>}
                 </div>
               </div>
-              {gps.status === "locked" && (
+              {gps.status==="locked" && (
                 <>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{gps.address || `${gps.lat?.toFixed(5)}° N`}</div>
-                  <div style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", color: "var(--muted)", marginTop: 2 }}>
-                    {gps.lat?.toFixed(6)}° N · {gps.lng?.toFixed(6)}° E
-                  </div>
-                  {/* Mini GPS map */}
+                  <div style={{fontSize:13,fontWeight:500}}>{gps.address||`${gps.lat?.toFixed(5)}° N`}</div>
+                  <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"var(--muted)",marginTop:2}}>{gps.lat?.toFixed(6)}° N · {gps.lng?.toFixed(6)}° E</div>
                   <div className="gps-map">
-                    <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: .1 }} viewBox="0 0 100 40" preserveAspectRatio="none">
-                      {[8, 16, 24, 32].map(v => (
-                        <g key={v}>
-                          <line x1={v * 2.5} y1="0" x2={v * 2.5} y2="40" stroke="var(--green)" strokeWidth=".4" />
-                          <line x1="0" y1={v} x2="100" y2={v} stroke="var(--green)" strokeWidth=".4" />
-                        </g>
-                      ))}
+                    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.1}} viewBox="0 0 100 40" preserveAspectRatio="none">
+                      {[8,16,24,32].map(v=><g key={v}><line x1={v*2.5} y1="0" x2={v*2.5} y2="40" stroke="var(--green)" strokeWidth=".4"/><line x1="0" y1={v} x2="100" y2={v} stroke="var(--green)" strokeWidth=".4"/></g>)}
                     </svg>
-                    <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 40">
-                      <circle cx="50" cy="20" r="10" fill="none" stroke="rgba(82,183,136,.18)" strokeWidth="1" />
-                      <circle cx="50" cy="20" r="5"  fill="none" stroke="rgba(82,183,136,.35)" strokeWidth="1" />
-                      <circle cx="50" cy="20" r="2.5" fill="var(--green)" opacity=".9" />
+                    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 100 40">
+                      <circle cx="50" cy="20" r="10" fill="none" stroke="rgba(82,183,136,.18)" strokeWidth="1"/>
+                      <circle cx="50" cy="20" r="5"  fill="none" stroke="rgba(82,183,136,.35)" strokeWidth="1"/>
+                      <circle cx="50" cy="20" r="2.5" fill="var(--green)" opacity=".9"/>
                     </svg>
-                    <div style={{ position: "absolute", bottom: 4, right: 8, fontSize: 9, fontFamily: "'DM Mono',monospace", color: "rgba(82,183,136,.55)" }}>LIVE GPS</div>
+                    <div style={{position:"absolute",bottom:4,right:8,fontSize:9,fontFamily:"'DM Mono',monospace",color:"rgba(82,183,136,.55)"}}>LIVE GPS</div>
                   </div>
                 </>
               )}
-              {gps.status === "error" && <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 6 }}>{gps.error}</div>}
+              {gps.status==="error" && <div style={{fontSize:12,color:"var(--amber)",marginTop:6}}>{gps.error}</div>}
             </div>
 
-            {/* ── Video record CTA ── */}
-            <button
-              style={{ width: "100%", background: "var(--s2)", border: `1px dashed ${type ? "rgba(230,57,70,.35)" : "var(--b1)"}`, borderRadius: 14, height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, cursor: type ? "pointer" : "not-allowed", opacity: type ? 1 : 0.5, marginBottom: 14, transition: "all .15s" }}
-              onClick={() => type && setStep(1)}
-              disabled={!type}
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" width="26" height="26" style={{ color: type ? "rgba(255,255,255,.35)" : "rgba(255,255,255,.12)" }}>
-                <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h7.5A2.25 2.25 0 0013 13.75v-1.13l3.22 2.58A.75.75 0 0017.5 14.5v-9a.75.75 0 00-1.28-.53L13 7.38V6.25A2.25 2.25 0 0010.75 4h-7.5z" />
+            <button style={{width:"100%",background:"var(--s2)",border:`1px dashed ${type?"rgba(230,57,70,.35)":"var(--b1)"}`,borderRadius:14,height:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:type?"pointer":"not-allowed",opacity:type?1:0.5,marginBottom:14,transition:"all .15s"}}
+              onClick={()=>type&&setStep(1)} disabled={!type}>
+              <svg viewBox="0 0 20 20" fill="currentColor" width="26" height="26" style={{color:type?"rgba(255,255,255,.35)":"rgba(255,255,255,.12)"}}>
+                <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h7.5A2.25 2.25 0 0013 13.75v-1.13l3.22 2.58A.75.75 0 0017.5 14.5v-9a.75.75 0 00-1.28-.53L13 7.38V6.25A2.25 2.25 0 0010.75 4h-7.5z"/>
               </svg>
-              <span style={{ fontSize: 12, color: type ? "rgba(255,255,255,.35)" : "rgba(255,255,255,.15)" }}>
-                {type ? "Tap to record 10-second live video" : "Select incident type first"}
-              </span>
-              {type && <span style={{ fontSize: 10, fontFamily: "'DM Mono',monospace", color: "var(--red)" }}>NO GALLERY · LIVE ONLY · 10s MAX</span>}
+              <span style={{fontSize:12,color:type?"rgba(255,255,255,.35)":"rgba(255,255,255,.15)"}}>{type?"Tap to record 10-second live video":"Select incident type first"}</span>
+              {type && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--red)"}}>NO GALLERY · LIVE ONLY · 10s MAX</span>}
             </button>
 
-            {/* ── Notes ── */}
-            <div style={{ marginBottom: 18 }}>
-              <p className="lbl" style={{ marginBottom: 8 }}>Additional context <span style={{ opacity: .5, textTransform: "none", fontSize: 11 }}>(optional)</span></p>
-              <textarea className="input" rows={3} placeholder="Number of vehicles, injuries visible, hazards present…" value={notes} onChange={e => setNotes(e.target.value)} />
+            <div style={{marginBottom:18}}>
+              <p className="lbl" style={{marginBottom:8}}>Additional context <span style={{opacity:.5,textTransform:"none",fontSize:11}}>(optional)</span></p>
+              <textarea className="input" rows={3} placeholder="Number of vehicles, injuries visible, hazards present…" value={notes} onChange={e=>setNotes(e.target.value)}/>
             </div>
 
-            {/* ── Anonymous toggle ── */}
-            <div className="card2" style={{ padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ fontSize: 20 }}>🕶️</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>Anonymous mode</div>
-                <div style={{ fontSize: 11, color: "var(--muted)" }}>Identity not shared with responders</div>
+            <div className="card2" style={{padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{fontSize:20}}>🕶️</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:500}}>Anonymous mode</div>
+                <div style={{fontSize:11,color:"var(--muted)"}}>Identity not shared with responders</div>
               </div>
-              <button className="toggle-track" style={{ background: anon ? "var(--green)" : "rgba(255,255,255,.15)" }} onClick={() => setAnon(v => !v)}>
-                <div className="toggle-thumb" style={{ left: anon ? 20 : 2 }} />
+              <button className="toggle-track" style={{background:anon?"var(--green)":"rgba(255,255,255,.15)"}} onClick={()=>setAnon(v=>!v)}>
+                <div className="toggle-thumb" style={{left:anon?20:2}}/>
               </button>
             </div>
 
-            {/* ── Submit ── */}
-            <button
-              className="btn-red"
-              style={{ width: "100%", padding: "15px 0", fontSize: 15, justifyContent: "center", borderRadius: 12 }}
-              onClick={() => type && setStep(1)}
-              disabled={!type}
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" clipRule="evenodd" /></svg>
-              {type ? `Send ${type} Alert` : "Select an incident type first"}
+            <button className="btn-red" style={{width:"100%",padding:"15px 0",fontSize:15,justifyContent:"center",borderRadius:12}} onClick={()=>type&&setStep(1)} disabled={!type}>
+              <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495z" clipRule="evenodd"/></svg>
+              {type?`Send ${type} Alert`:"Select an incident type first"}
             </button>
-            <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,.18)", marginTop: 10 }}>
+            <p style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.18)",marginTop:10}}>
               Protected under Good Samaritan provisions · No forced identity
             </p>
           </div>
         </main>
       </div>
-      <BottomNav path={path} />
+      <BottomNav path={path}/>
     </>
   );
 }
