@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,6 +11,9 @@ import { db }          from "@/lib/firebase";
 import { confColor, statusBadge, timeAgo } from "@/lib/utils";
 import type { IncidentDoc, IncidentUI, ReporterDoc } from "@/lib/types";
 
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  STYLES                                                                     */
+/* ─────────────────────────────────────────────────────────────────────────── */
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
 
