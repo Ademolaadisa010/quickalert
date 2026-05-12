@@ -1,29 +1,48 @@
 // lib/utils.ts
-import { Timestamp } from "firebase/firestore";
-import type { IncidentStatus } from "./types";
+// Shared utility functions used across the app
 
-/** Human-readable elapsed time from a Firestore Timestamp */
-export function timeAgo(ts: Timestamp): string {
-  const diffMs  = Date.now() - ts.toMillis();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1)  return "just now";
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr  < 24) return `${diffHr} hr ago`;
-  return `${Math.floor(diffHr / 24)} days ago`;
+/* ── AI confidence → colour ───────────────────────────────────────────────── */
+export function confColor(conf: number): string {
+  if (conf >= 75) return "#52B788"; // green  — HIGH
+  if (conf >= 40) return "#F4A261"; // amber  — MEDIUM
+  return "#E63946";                 // red    — LOW
 }
 
-/** Colour based on AI confidence score */
-export function confColor(c: number): string {
-  if (c >= 75) return "var(--green)";
-  if (c >= 50) return "var(--amber)";
-  return "var(--red)";
-}
-
-/** Badge CSS class for incident status */
-export const statusBadge: Record<IncidentStatus, string> = {
+/* ── Firestore status → badge CSS class ──────────────────────────────────── */
+export const statusBadge: Record<string, string> = {
   active:    "badge-red",
   routing:   "badge-amber",
   responded: "badge-green",
   resolved:  "badge-dim",
 };
+
+/* ── Format a Firestore Timestamp as "X min ago" ─────────────────────────── */
+export function timeAgo(ts: any): string {
+  try {
+    const ms = Date.now() - ts.toMillis();
+    const m  = Math.floor(ms / 60000);
+    if (m < 1)  return "just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  } catch {
+    return "";
+  }
+}
+
+/* ── Incident type → emoji ───────────────────────────────────────────────── */
+export function incidentEmoji(type: string): string {
+  const t = type.toLowerCase();
+  if (t.includes("road") || t.includes("accident")) return "🚗";
+  if (t.includes("medical"))                         return "🏥";
+  if (t.includes("fire"))                            return "🔥";
+  return "📍";
+}
+
+/* ── Confidence → priority string ────────────────────────────────────────── */
+export function confToPriority(conf: number): "high" | "medium" | "low" {
+  if (conf >= 75) return "high";
+  if (conf >= 40) return "medium";
+  return "low";
+}
