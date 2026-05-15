@@ -15,7 +15,11 @@ import {
   updateDoc, serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { INCIDENTS, confColor, statusBadge } from "@/lib/data";
+import { confColor, statusBadge } from "@/lib/data";
+// import {
+//   collection, query, where, orderBy,
+//   onSnapshot, doc, updateDoc, serverTimestamp,
+// } from "firebase/firestore";
 
 /* ─────────────── types ─────────────────────────────────────────────────── */
 type AccountStatus = "pending" | "approved" | "rejected";
@@ -134,13 +138,13 @@ const NAV_ITEMS = [
   {href:"/dashboard",label:"Dashboard",       badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clipRule="evenodd"/></svg>},
   {href:"/report",   label:"Report Emergency",badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd"/></svg>},
   {href:"/map",      label:"Live Map",         badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clipRule="evenodd"/></svg>},
-  {href:"/responder",label:"Responder View",   badge:INCIDENTS.filter(i=>i.status==="active").length,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.569 1.175A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg>},
+  {href:"/responder",label:"Responder View",   badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.569 1.175A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg>},
   {href:"/profile",  label:"My Profile",       badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-5.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10 12a5.99 5.99 0 00-4.793 2.39A6.483 6.483 0 0010 16.5a6.483 6.483 0 004.793-2.11A5.99 5.99 0 0010 12z" clipRule="evenodd"/></svg>},
 ];
 const BOTTOM_TABS = [
   {href:"/dashboard",label:"Home",   icon:<svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path fillRule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clipRule="evenodd"/></svg>},
   {href:"/map",      label:"Map",    icon:<svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clipRule="evenodd"/></svg>},
-  {href:"/responder",label:"Alerts", badge:INCIDENTS.filter(i=>i.status==="active").length,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.569 1.175A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg>},
+  {href:"/responder",label:"Alerts", badge:0,icon:<svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.569 1.175A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg>},
   {href:"/profile",  label:"Profile",icon:<svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-5.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10 12a5.99 5.99 0 00-4.793 2.39A6.483 6.483 0 0010 16.5a6.483 6.483 0 004.793-2.11A5.99 5.99 0 0010 12z" clipRule="evenodd"/></svg>},
 ];
 
@@ -452,26 +456,72 @@ function RejectedScreen({ onSignOut }: { onSignOut: () => void }) {
 /* ══════════════════════════════════════════════════════════════════════════
    RESPONDER DASHBOARD (approved users only)
 ══════════════════════════════════════════════════════════════════════════ */
-function ResponderDashboard({ profile, onSignOut }: { profile: ResponderProfile; onSignOut: () => void }) {
-  const [expanded, setExpanded] = useState<string|null>(null);
-  const [accepted, setAccepted] = useState<string[]>([]);
-  const [loading,  setLoading]  = useState<string|null>(null);
+interface LiveIncident {
+  id: string;
+  type: string;
+  loc: string;
+  conf: number;
+  status: string;
+  priority: string;
+  witnesses: number;
+  responder: string | null;
+  aiSummary?: string;
+  mediaUrl?: string | null;
+  createdAt: any;
+  hospitalName?: string;
+  distKm?: number;
+}
 
-  const active = INCIDENTS.filter(i => i.status === "active" || i.status === "routing");
+function timeAgoLocal(ts: any): string {
+  try {
+    const ms = Date.now() - ts.toMillis();
+    const m  = Math.floor(ms / 60000);
+    if (m < 1)  return "just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h/24)}d ago`;
+  } catch { return ""; }
+}
+
+function ResponderDashboard({ profile, onSignOut }: { profile: ResponderProfile; onSignOut: () => void }) {
+  const [expanded,  setExpanded]  = useState<string|null>(null);
+  const [accepted,  setAccepted]  = useState<string[]>([]);
+  const [actionId,  setActionId]  = useState<string|null>(null);
+  const [incidents, setIncidents] = useState<LiveIncident[]>([]);
+  const [incLoading,setIncLoading]= useState(true);
+
+  // Real-time Firestore listener — only active/routing incidents
+  useEffect(() => {
+    const q = query(
+      collection(db, "incidents"),
+      where("status", "in", ["active", "routing"]),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(q,
+      snap => {
+        setIncidents(snap.docs.map(d => ({ id: d.id, ...d.data() } as LiveIncident)));
+        setIncLoading(false);
+      },
+      err => { console.error("Incidents listener:", err); setIncLoading(false); }
+    );
+    return () => unsub();
+  }, []);
+
+  const active = incidents;
 
   const handleAccept = async (id: string) => {
-    setLoading(id);
+    setActionId(id);
     try {
-      // Update the incident in Firestore
       await updateDoc(doc(db, "incidents", id), {
-        responder:  profile.name,
-        status:     "routing",
+        responder:   profile.name,
+        status:      "routing",
         respondedAt: serverTimestamp(),
       });
       setAccepted(a => [...a, id]);
     } catch (err) {
       console.error("Accept error:", err);
-    } finally { setLoading(null); }
+    } finally { setActionId(null); }
   };
 
   const emoji = (type: string) =>
@@ -519,7 +569,16 @@ function ResponderDashboard({ profile, onSignOut }: { profile: ResponderProfile;
 
       {/* Alert cards */}
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {active.length === 0 ? (
+        {incLoading ? (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {[1,2].map(n=>(
+              <div key={n} style={{background:"var(--s1)",border:"1px solid var(--b1)",borderRadius:16,padding:18}}>
+                <div style={{height:14,width:"60%",background:"var(--s2)",borderRadius:6,marginBottom:10}}/>
+                <div style={{height:10,width:"80%",background:"var(--s2)",borderRadius:6}}/>
+              </div>
+            ))}
+          </div>
+        ) : active.length === 0 ? (
           <div className="card2" style={{padding:"32px 20px",textAlign:"center",color:"var(--muted)",fontSize:14}}>
             <div style={{fontSize:28,marginBottom:8}}>✓</div>
             No active alerts right now
@@ -527,7 +586,7 @@ function ResponderDashboard({ profile, onSignOut }: { profile: ResponderProfile;
         ) : active.map((inc,idx)=>{
           const done = accepted.includes(inc.id);
           const open = expanded === inc.id;
-          const busy = loading === inc.id;
+          const busy = actionId === inc.id;
           return (
             <div key={inc.id} className="alert-card fadeUp" style={{animationDelay:`${idx*0.07}s`,opacity:done?.6:1,transition:"opacity .3s"}}>
               <div className="alert-header" onClick={()=>setExpanded(open?null:inc.id)}>
@@ -543,9 +602,8 @@ function ResponderDashboard({ profile, onSignOut }: { profile: ResponderProfile;
                     </div>
                     <div style={{fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:6}}>{inc.loc}</div>
                     <div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:"var(--dim)"}}>
-                      <span>📍 {inc.dist}</span><span>·</span>
-                      <span>👥 {inc.witnesses}</span><span>·</span>
-                      <span>{inc.time}</span>
+                      <span>👥 {inc.witnesses||0} witness{inc.witnesses!==1?"es":""}</span><span>·</span>
+                      <span>{timeAgoLocal(inc.createdAt)}</span>
                     </div>
                   </div>
                   <div style={{textAlign:"right",flexShrink:0}}>
