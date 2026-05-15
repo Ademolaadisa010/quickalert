@@ -23,5 +23,24 @@ export interface IncidentDoc {
   aiSummary:   string;
   aiLevel:     "LOW" | "MEDIUM" | "HIGH" | "";
   fake:        boolean;
-  createdAt:   Timestamp | null;
+  createdAt:    Timestamp | null;
+  // dispatch fields (optional — set when incident is dispatched to a hospital)
+  dispatchedTo: string | null;
+  hospitalName: string | null;
+  distKm:       number | null;
+}
+
+/* ── IncidentUI — IncidentDoc + derived UI fields ─────────────────────────── */
+export interface IncidentUI extends IncidentDoc {
+  timeAgo: string;   // e.g. "2m ago"
+}
+
+/* ── Firestore reporter document (leaderboard) ────────────────────────────── */
+export interface ReporterDoc {
+  id:       string;
+  anonId:   string;   // e.g. "4F2A"
+  pts:      number;
+  reports:  number;
+  accuracy: number;   // percentage 0–100
+  createdAt: Timestamp | null;
 }

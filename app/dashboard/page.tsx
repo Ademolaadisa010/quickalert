@@ -254,7 +254,7 @@ export default function DashboardPage() {
 
   // Average confidence of today's verified (conf ≥ 50) incidents
   const todayVerified = incidents.filter(i => {
-    const msAgo = Date.now() - i.createdAt.toMillis();
+    const msAgo = Date.now() - (i.createdAt?.toMillis() ?? 0);
     return msAgo < 86_400_000 && i.conf >= 50;
   });
   const avgConf = todayVerified.length
